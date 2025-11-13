@@ -20,6 +20,9 @@
     background-color: #1a1a1a;
     padding: 1rem 2rem;
     box-shadow: 0 2px 8px #0008;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
   header h1 {
     margin: 0;
@@ -27,6 +30,22 @@
     color: #ff7f00;
     font-size: 2.2rem;
     letter-spacing: 0.1em;
+  }
+  button#fullscreen-btn {
+    background: #ff7f00;
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    font-family: monospace, monospace;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: background 0.25s ease;
+  }
+  button#fullscreen-btn:hover {
+    background: #ffaa33;
   }
   #pi-display {
     flex: 1;
@@ -65,7 +84,6 @@
     text-align: center;
     padding-bottom: 10px;
   }
-  /* Scrollbar for pi-display */
   #pi-display::-webkit-scrollbar {
     width: 8px;
   }
@@ -97,10 +115,11 @@
 <body>
 <header>
   <h1>1000 digits of π</h1>
+  <button id="fullscreen-btn" aria-label="Toggle fullscreen">Fullscreen</button>
 </header>
 <div id="pi-display" tabindex="0" aria-label="Pi digits typing area" spellcheck="false"></div>
 <footer>type the digits.</footer>
-<div id="timer">00:00</div>
+<div id="timer">Time: 00:00</div>
 
 <script>
 const PI_DIGITS =
@@ -124,21 +143,17 @@ const PI_DIGITS =
 + "5024459455"
 ;
 
-const SYMBOLS = "~!@#$%^&*()_+-=[]{}|;:',.<>?/0123456789";
+const BLACK_OBFUSCATION_CHAR = "X";
 
 let inputIndex = 0;
 let mistakes = new Set();
 const piDisplay = document.getElementById("pi-display");
 
-let symbols = new Array(PI_DIGITS.length).fill(null);
-
-function getRandomSymbol() {
-  return SYMBOLS.charAt(Math.floor(Math.random() * SYMBOLS.length));
-}
+let symbols = new Array(PI_DIGITS.length).fill(BLACK_OBFUSCATION_CHAR);
 
 function initSymbols() {
   for(let i=0; i< PI_DIGITS.length; i++) {
-    symbols[i] = getRandomSymbol();
+    symbols[i] = BLACK_OBFUSCATION_CHAR;
   }
 }
 
@@ -162,17 +177,8 @@ function render() {
   }
 }
 
-function updateSymbols() {
-  for (let i = inputIndex; i < PI_DIGITS.length; i++) {
-    symbols[i] = getRandomSymbol();
-  }
-  render();
-}
-
 initSymbols();
 render();
-
-let symbolInterval = setInterval(updateSymbols, 80);
 
 window.addEventListener("keydown", e => {
   if (inputIndex >= PI_DIGITS.length) return;
@@ -186,9 +192,7 @@ window.addEventListener("keydown", e => {
     inputIndex++;
     mistakes.clear();
     if (inputIndex === PI_DIGITS.length) {
-      clearInterval(symbolInterval);
-      clearInterval(timerInterval);
-      alert("you typed all digits correctly");
+      alert("🎉 You typed all digits correctly!");
     }
     render();
   } else {
@@ -196,13 +200,27 @@ window.addEventListener("keydown", e => {
     mistakes.add(inputIndex);
     if (inputIndex > 0) inputIndex--;
     render();
-    clearInterval(symbolInterval);
     setTimeout(() => {
       mistakes.clear();
-      symbolInterval = setInterval(updateSymbols, 80);
       render();
     }, 800);
   }
+});
+
+// Fullscreen toggle
+const fullscreenBtn = document.getElementById("fullscreen-btn");
+fullscreenBtn.addEventListener("click", () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+    fullscreenBtn.textContent = "Exit Fullscreen";
+  } else {
+    document.exitFullscreen().catch(() => {});
+    fullscreenBtn.textContent = "Fullscreen";
+  }
+});
+
+document.addEventListener("fullscreenchange", () => {
+  fullscreenBtn.textContent = document.fullscreenElement ? "Exit Fullscreen" : "Fullscreen";
 });
 
 // Timer
@@ -212,7 +230,7 @@ let timerInterval = setInterval(() => {
   let elapsed = Math.floor((Date.now() - startTime) / 1000);
   let min = String(Math.floor(elapsed / 60)).padStart(2, "0");
   let sec = String(elapsed % 60).padStart(2, "0");
-  timerEl.textContent = `${min}:${sec}`;
+  timerEl.textContent = `Time: ${min}:${sec}`;
 }, 1000);
 </script>
 </body>
