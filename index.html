@@ -3,15 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Type 1000 Digits of π</title>
+<title>1000 digits of π</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fira+Mono&display=swap');
   body {
     margin: 0;
     background: #0f111a;
     color: #cfd8dc;
-    font-family: 'Fira Mono', monospace;
-    font-size: 1.3rem;
+    font-family: monospace, monospace;
+    font-size: 2rem;
     user-select: none;
     display: flex;
     flex-direction: column;
@@ -26,7 +25,7 @@
     margin: 0;
     font-weight: 600;
     color: #80cbc4;
-    font-size: 1.8rem;
+    font-size: 2.2rem;
   }
   #pi-display {
     flex: 1;
@@ -60,7 +59,7 @@
   }
   footer {
     color: #556677;
-    font-size: 0.9rem;
+    font-size: 1rem;
     text-align: center;
     padding-bottom: 10px;
   }
@@ -75,14 +74,30 @@
     background: #455a74;
     border-radius: 4px;
   }
+  #timer {
+    position: fixed;
+    bottom: 12px;
+    right: 12px;
+    background: #1f2630cc;
+    padding: 0.25rem 0.7rem;
+    font-family: monospace, monospace;
+    font-size: 1.25rem;
+    color: #80cbc4;
+    border-radius: 6px;
+    user-select: none;
+    box-shadow: 0 0 8px #000a;
+    pointer-events: none;
+    z-index: 9999;
+  }
 </style>
 </head>
 <body>
 <header>
-  <h1>Type the first 1000 digits of π</h1>
+  <h1>1000 digits of π</h1>
 </header>
 <div id="pi-display" tabindex="0" aria-label="Pi digits typing area" spellcheck="false"></div>
-<footer>Type the digits one by one. Mistakes reset progress and highlight errors in red.</footer>
+<footer>type the digits.</footer>
+<div id="timer">00:00</div>
 
 <script>
 const PI_DIGITS = 
@@ -103,24 +118,21 @@ const PI_DIGITS =
 + "14684409012249534301465495853710507922796892589235"
 + "42019956112129021960864034418159813629774771309960"
 + "51870721134999999837297804995105973173281609631859"
-+ "5024459455" // truncated but over 1000 chars including "3." start
++ "5024459455"
 ;
 
-// Symbols exclude letters (A-Z, a-z)
-const SYMBOLS = "~!@#$%^&*()_+-=[]{}|;:',.<>?";
+const SYMBOLS = "~!@#$%^&*()_+-=[]{}|;:',.<>?/0123456789";
 
 let inputIndex = 0;
 let mistakes = new Set();
 const piDisplay = document.getElementById("pi-display");
 
-// Initialize symbols with fixed length for each digit
 let symbols = new Array(PI_DIGITS.length).fill(null);
 
 function getRandomSymbol() {
   return SYMBOLS.charAt(Math.floor(Math.random() * SYMBOLS.length));
 }
 
-// Fill symbols array for all indices at start and on reset
 function initSymbols() {
   for(let i=0; i< PI_DIGITS.length; i++) {
     symbols[i] = getRandomSymbol();
@@ -128,7 +140,6 @@ function initSymbols() {
 }
 
 function render() {
-  // Clear
   piDisplay.innerHTML = "";
   for (let i = 0; i < PI_DIGITS.length; i++) {
     const span = document.createElement("span");
@@ -149,23 +160,19 @@ function render() {
 }
 
 function updateSymbols() {
-  // Only update symbols for indices >= inputIndex so length never changes
   for (let i = inputIndex; i < PI_DIGITS.length; i++) {
     symbols[i] = getRandomSymbol();
   }
   render();
 }
 
-// Initialize symbols
 initSymbols();
 render();
 
-let symbolInterval = setInterval(updateSymbols, 250);
+let symbolInterval = setInterval(updateSymbols, 80);
 
 window.addEventListener("keydown", e => {
   if (inputIndex >= PI_DIGITS.length) return;
-
-  // Ignore modifier keys
   if (e.ctrlKey || e.metaKey || e.altKey) return;
 
   e.preventDefault();
@@ -177,22 +184,33 @@ window.addEventListener("keydown", e => {
     mistakes.clear();
     if (inputIndex === PI_DIGITS.length) {
       clearInterval(symbolInterval);
-      alert("🎉 You typed all digits correctly!");
+      clearInterval(timerInterval);
+      alert("you typed all digits correctly!");
     }
     render();
   } else {
+    mistakes.clear();
     mistakes.add(inputIndex);
+    if (inputIndex > 0) inputIndex--;
     render();
     clearInterval(symbolInterval);
     setTimeout(() => {
-      inputIndex = 0;
       mistakes.clear();
-      initSymbols();
       symbolInterval = setInterval(updateSymbols, 80);
       render();
     }, 800);
   }
 });
+
+// Timer
+const timerEl = document.getElementById("timer");
+let startTime = Date.now();
+let timerInterval = setInterval(() => {
+  let elapsed = Math.floor((Date.now() - startTime) / 1000);
+  let min = String(Math.floor(elapsed / 60)).padStart(2, "0");
+  let sec = String(elapsed % 60).padStart(2, "0");
+  timerEl.textContent = `${min}:${sec}`;
+}, 1000);
 </script>
 </body>
 </html>
